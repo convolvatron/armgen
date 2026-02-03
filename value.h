@@ -88,7 +88,8 @@ static inline boolean is_negative(value x) {
 
 
 
-static inline boolean equal() {
+static inline boolean equal(value a, value b) {
+    return true;
 }
 
 #define foreach(__i, __v) for (value _count = 0, _i ;\\

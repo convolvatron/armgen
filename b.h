@@ -13,7 +13,7 @@ typedef u64 *string;
 typedef u8 bit;
 
 
-void panic(char *);
+_Noreturn void panic(char *);
 
 // struct -> deallocate
 typedef void *(**region)(void *state, bits length);
@@ -21,7 +21,7 @@ typedef void *(**region)(void *state, bits length);
 #include <tag.h>
 
 static inline void *allocate(region r, u64 length) {
-    (**r)((void *)r, length);
+    return (**r)((void *)r, length);
 }
 
 static inline void deallocate(region r, u64 base, u64 length) {
@@ -32,9 +32,10 @@ static inline void deallocate(region r, u64 base, u64 length) {
 
 #include <value.h>
 #include <apply.h>
+#include <stdarg.h>
 
 #define valargs(__start, __each) \
-    for (value __each = zero; __each != NOT_A_VALUE;)  for (va_list __a; va_start(__a, __start), __each != NOT_A_VALUE; ) for (;__each = va_arg(__a, value), __each != NOT_A_VALUE;)
+    for (value __each = zero; __each != NOT_A_VALUE;)  for (va_list __a; va_start(__a), __each != NOT_A_VALUE; ) for (;__each = va_arg(__a, value), __each != NOT_A_VALUE;)
 
 #define argcount(__start) \
     ({int i = 0; for (value __each = zero; __each != NOT_A_VALUE;) i++; (i)})
@@ -56,3 +57,5 @@ typedef value program;
 region mmap_region(region r);
 region malloc_region();
 string execute(region r, program instructions, value input);
+#include <alloca.h>
+u64 cast_to_number(value x);

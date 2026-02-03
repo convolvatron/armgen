@@ -1,6 +1,6 @@
 
 
-static inline value apply(value (*f)(), vector arguments) {
+static inline value apply(value (*f)(...), vector arguments) {
     switch(length(arguments)/bitsizeof(value)) {
     case 0: return f();
     case 1: return f(get(arguments, 0));    

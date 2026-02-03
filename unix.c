@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <sys/mman.h>
+#include <string.h>
 
 void panic(char *x) {
     write(1, x, strlen(x));
@@ -40,7 +42,7 @@ void *mmap_allocate(void *r, bits length) {
 }
 
 region mmap_region(region r) {
-    mmap_region_state new = allocate(r, bitsizeof(struct mmap_region_state), tag_region);
+    mmap_region_state new = set_tag(allocate(r, bitsizeof(struct mmap_region_state)), tag_region);
     new->r = mmap_allocate;
     new->base= 0;
     new->length = new->fill = 0;

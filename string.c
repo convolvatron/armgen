@@ -11,7 +11,7 @@ static void cat_one(string source, u64 *offset, u64 *working, u64 **base) {
         *working |= sword << (*offset);
         if ((*offset += xfer) == 64) {
             **base = *working;
-	    *base++;
+	    *base = *base+1;
             *working = sword >> (64 - *offset);
             *offset = 0;
         }
@@ -84,7 +84,7 @@ string print(region r, string s) {
     return new;
 }
 
-static unsigned char *hex_digits= "0123456789abcdef";
+static char *hex_digits= "0123456789abcdef";
 
 string print_hex(region r, string s) {
     u64 len = length(s);

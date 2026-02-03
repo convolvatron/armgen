@@ -189,5 +189,6 @@ program generate_arm(region r, expression e) {
 		result = concatenate(r, apply((void *)g->g, args));
 	    }
     }
+    return result;
 }
 
