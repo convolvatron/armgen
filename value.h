@@ -6,11 +6,11 @@ typedef value reg;
 typedef value boolean;
 typedef value vector;
 
-extern value one;
-extern value zero;
-
 #define true ((void *)(1))
 #define false ((void *)(0))
+
+extern value one;
+extern value zero;
 
 extern value get(value, value);
 extern u64 length (value s);

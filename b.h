@@ -12,7 +12,6 @@ typedef u64 bits;
 typedef u64 *string;
 typedef u8 bit;
 
-
 _Noreturn void panic(char *);
 
 // struct -> deallocate
@@ -38,7 +37,7 @@ static inline void deallocate(region r, u64 base, u64 length) {
     for (value __each = zero; __each != NOT_A_VALUE;)  for (va_list __a; va_start(__a), __each != NOT_A_VALUE; ) for (;__each = va_arg(__a, value), __each != NOT_A_VALUE;)
 
 #define argcount(__start) \
-    ({int i = 0; for (value __each = zero; __each != NOT_A_VALUE;) i++; (i)})
+    ({int i = 0; for (value __each = zero; __each != NOT_A_VALUE; i++); (i);})
 
 #define min(_x, _y) (((_x) < (_y))?(_x):(_y))
 
