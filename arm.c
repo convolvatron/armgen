@@ -1,18 +1,18 @@
 #include <b.h>
 
-
 typedef value location;
 typedef value expression;
 typedef string (*generator)(region r, ...);
 
-// signedness. what is the domain of target?
-string relative_branch(region r, location conditional, location target) {
-    return 0;
-}
+// we think this defines whether the operands are 32 or 64 bits
+#define SIZE coerce_number(r, true, 1)
 
-#define SIZE coerce(r, true, 1)
-
-static string move_immediate(region r, reg d, u16 value, int offset, boolean zero) {
+// reg d, u16 value, int offset, boolean zero)
+//movz https://developer.arm.com/documentation/ddi0602/2025-12/Base-Instructions/MOVZ--Move-wide-with-zero-
+static string move_immediate(region r, value parameters) {
+    reg destination = get(parameters, text_immediate("destination"));
+    u16 val = to_number(get(parameters, text_immediate("value")));
+    u16 offset = to_number(get_default(parameters, text_immediate("offset"), 0));    
     // "hw" encodes the amount by which to shift the immediate left, either 0 (the default), 16(1), 32(2) or 48(3),
     u64 hw = offset/16;
     if (hw*16 != offset) {
@@ -22,34 +22,52 @@ static string move_immediate(region r, reg d, u16 value, int offset, boolean zer
     return concatenate(r,
 		       SIZE,
 		       imm(1),
-		       constant(r, 0, 1),
+		       constant(r, 0, 1), // why is this on a separate line?
 		       constant(r, 0b100101, 6),
-		       coerce(r, imm(hw), 2),
-                       constant(r, value, 16),	
-		       constant(r, to_number(d), 5));
+		       coerce_number(r, imm(hw), 2),
+                       constant(r, val, 16),	
+		       constant(r, to_number(destination), 5));
 }
 
-static string move_u64(region r, reg d, u64 a) {
+static string move_u64(region r, value parameters) {
+    // type checking - schematime!
+    reg destination = get(parameters, text_immediate("destination"));
+    u64 val = to_number(get(parameters, text_immediate("value")));
     string output = 0;
-    for (int i = 0 ; i < 64;i += 16) {
-	u64 slice = (a >> i) & 65535;
+    for (int i = 0 ; i < 64; i += 16) {
+	u64 slice = (val >> i) & 65535;
 	if (slice) {
-	    string m = move_immediate(r, d, slice, i, output?false:true);
-	    output = (output)?concatenate(r, output, m):m;
+	    string m = move_immediate(r, map(r,
+                                             "destination", destination,
+                                             "zero", output?true:false,
+                                             "value", slice));
+	    output = concatenate(r, output, m);
 	}
     }
-    if (!output) output = move_immediate(r, d, 0, 0, true);
     return output;
 }
 
-string add_immediate(region r, reg d, reg s, value imm) {
+// add
+// https://developer.arm.com/documentation/ddi0596/2020-12/Base-Instructions/ADD--immediate---Add--immediate--
+string add_immediate(region r, value parameters) {
+    reg destination = get(parameters, text_immediate("destination"));
+    reg srouce = get(parameters, text_immediate("source"));    
+    u64 val = to_number(get(parameters, text_immediate("value")));    
+    // hardcoded internal shift, op and S flags (??)
     return concatenate(r, constant(r, 0b1001000100, 10),
-                       coerce(r, imm, 12),
-                       constant(r, to_number(s), 5),
-                       constant(r, to_number(d), 5));		       
+                       coerce_number(r, val, 12),
+                       // why constant v coerce?
+                       constant(r, to_number(source), 5),
+                       constant(r, to_number(destination), 5));		       
 }
 
+// ldr
+//https://developer.arm.com/documentation/ddi0596/2021-06/Base-Instructions/LDR--immediate---Load-Register--immediate--
 string load(region r, value d, value s, value offset, value shift) {
+    reg destination = get(parameters, text_immediate("destination"));
+    u64 val = get(parameters, text_immediate("value"));
+    reg offset = get_default(parameters, text_immediate("destination"), 0);
+    u64 val = get_default(parameters, text_immediate("value"), 0);    
     return concatenate(r,
 		       constant(r, 0b10111000011, 12),
 		       constant(r, to_number(offset), 5),
@@ -59,7 +77,10 @@ string load(region r, value d, value s, value offset, value shift) {
 
 // this is a family
 // 0xd65f03c0
-string a64return(region r, reg n) {
+#define link_register 30
+// should be imm and register demux
+string jump(region r, value parameters) {
+    reg target = get_default(parameters, text_immediate("target"), link_register);
     return concatenate(r,
                        constant(r, 0b1101011001011111000000, 22),
                        constant(r, 30, 5),
@@ -137,18 +158,6 @@ string generate_print(region r, reg source) {
 string arm_get_tag(region r, reg dest, reg source) {
     return extract(r, dest, source, 56, 63);
 }
-  
-program loop(region r, program body, program condition, location condition_variable)
-{
-    u64 bodylen = length(body)/32;
-    return concatenate(r,
-		       condition,
-		       relative_branch(r, condition_variable, immediate(r, bodylen+1)), // body + branch
-		       body,
-		       relative_branch(r, true, signed_immediate(r, -(bodylen+2)))  // - body + 2 *branch
-		       );
-}
-
 
 typedef struct encoder  {
     char *name;
@@ -156,7 +165,7 @@ typedef struct encoder  {
     tag arguments[10];
 } *encoder;
 
-    
+// instructions are objects not names
 struct encoder arm64_encoders[] = {
     {"add", (void *)add_immediate, {tag_register, tag_register, tag_immediate, tag_empty}},
     {"print", (void *)generate_print, {tag_register, tag_empty}},    
@@ -167,14 +176,6 @@ boolean compare_signature(vector args, tag accepts[]) {
     return true;
 }
 
-static boolean vstrcmp(char *x, string a) {
-    int i = 0;
-    u8 *ab = (u8*)string_contents(a);
-    for (;x[i];i++);
-    if ((i * 8) != length(a)) return false;
-    for (int j = 0;j < i; j++) if (ab[j] != x[j]) return false;
-    return true;
-}
 
 program generate_arm(region r, expression e) {
     value result = zero;
@@ -190,5 +191,9 @@ program generate_arm(region r, expression e) {
 	    }
     }
     return result;
+}
+
+instruction_set bind_generators(map root) {
+    bind("add", add_immediate);
 }
 

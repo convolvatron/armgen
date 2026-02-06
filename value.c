@@ -1,6 +1,5 @@
 #include <b.h>
 
-
 // is this..|keys|?
 u64 length (value s) {
     if (tag_of(s) == tag_immediate) {
@@ -16,7 +15,7 @@ u64 length (value s) {
     panic("length of unknown representation");
 }
 
-u64 cast_to_number(value x) {
+u64 to_number(value x) {
     if (tag_of(x) == tag_immediate) {
         return (u64)x;
     }
@@ -30,9 +29,8 @@ u64 cast_to_number(value x) {
     panic ("unhandled tag in cast to number");
 }
 
-// cps this?
 value get(value in, value key) {
-    u64 keyv = cast_to_number(key);
+    u64 keyv = to_number(key);
     u64 *base;
     
     if (tag_of(in) == tag_immediate) {
@@ -47,4 +45,8 @@ value get(value in, value key) {
         panic("bad get");
     }
     return (base[keyv>>6] & (1ull<<(keyv&63ull)))?one:zero;
+}
+
+value get_default(value in, value key, value otherwise) {
+
 }

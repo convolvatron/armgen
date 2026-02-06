@@ -6,8 +6,8 @@ typedef value reg;
 typedef value boolean;
 typedef value vector;
 
-extern value one;
-extern value zero;
+value one = (value)1;
+value zero = (value)0;
 
 #define true ((void *)(1))
 #define false ((void *)(0))
@@ -59,9 +59,10 @@ extern value vector_internal(region, ...);
 	*(u64 *)m = (sizeof(_x) - 1) * 8;				\
 	init = 1;\
      }						\
-    ((value)m);})
-/*
-static inline value text_immediate(region r, char *x) {
+    set_tag(((value)m), tag_string);\
+})
+
+static inline value new_text(region r, char *x) {
     int len = 0;
     for (char *i = x; *i; i++, len+=8);
 
@@ -70,7 +71,7 @@ static inline value text_immediate(region r, char *x) {
     for (char *i = x; *i; i++, len+=8) *dst++ = *i;
     return new;
 }
-*/
+
 static inline value signed_immediate(region r, s64 x) {
     if (x < 0)
 	return map(text_immediate("negative"), true, text_immediate("value"), immediate(r, -x));
@@ -87,15 +88,17 @@ static inline boolean is_negative(value x) {
 }
 
 
-
 static inline boolean equal(value a, value b) {
     return true;
 }
 
+/*
 #define foreach(__i, __v) for (value _count = 0, _i ;\\
 			       _count< length(__v);\\
 			       _i = ((u64 *)contents_of(__v))[_count], _count = (value)(((u64) i) + count))
-string coerce(region r, string in, bits target) ;
+*/
+
+string coerce_number(region r, string in, bits target) ;
 
 static inline s64 from_signed(value x) {
     return 0;

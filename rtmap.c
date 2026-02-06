@@ -4,7 +4,7 @@
 value mapvv_get(value m, value key)
 {
     value *body = (value *)pointer_of(m);
-    u64 count = cast_to_number(*body);
+    u64 count = to_number(*body);
     body++;
     
     for (u64 i = 0; i < count; i++, body+=2) {

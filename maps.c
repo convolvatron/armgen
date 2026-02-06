@@ -24,6 +24,3 @@ string generate_equal(context c, x, y) {
     
 }
 
-
-void generate_runtime(retion r, instruction set_i) {
-}
