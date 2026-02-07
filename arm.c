@@ -51,8 +51,8 @@ static string move_u64(region r, value parameters) {
 // https://developer.arm.com/documentation/ddi0596/2020-12/Base-Instructions/ADD--immediate---Add--immediate--
 string add_immediate(region r, value parameters) {
     reg destination = get(parameters, text_immediate("destination"));
-    reg srouce = get(parameters, text_immediate("source"));    
-    u64 val = to_number(get(parameters, text_immediate("value")));    
+    reg source = get(parameters, text_immediate("source"));    
+    value val = get(parameters, text_immediate("value"));    
     // hardcoded internal shift, op and S flags (??)
     return concatenate(r, constant(r, 0b1001000100, 10),
                        coerce_number(r, val, 12),
@@ -79,11 +79,13 @@ string load(region r, value d, value s, value offset, value shift) {
 // 0xd65f03c0
 #define link_register 30
 // should be imm and register demux
+// return
+https://developer.arm.com/documentation/ddi0602/2025-12/Base-Instructions/RET--Return-from-subroutine-
 string jump(region r, value parameters) {
     reg target = get_default(parameters, text_immediate("target"), link_register);
     return concatenate(r,
                        constant(r, 0b1101011001011111000000, 22),
-                       constant(r, 30, 5),
+                       constant(r, target, 5),
                        constant(r, 0, 5));
 }
 
@@ -177,23 +179,9 @@ boolean compare_signature(vector args, tag accepts[]) {
 }
 
 
-program generate_arm(region r, expression e) {
-    value result = zero;
-    value function = get(e, text_immediate("function"));
-    value args = get(e, text_immediate("arguments"));
-    if (!function) panic("node with no function");
-    for (int i = 0 ; i < sizeof(arm64_encoders)/sizeof(struct encoder); i++) {
-	encoder g = arm64_encoders + i;
-	if (vstrcmp(g->name, function))
-	    if (compare_signature(args, g->arguments)) {
-		// n^2 :(
-		result = concatenate(r, apply((void *)g->g, args));
-	    }
-    }
-    return result;
-}
-
-instruction_set bind_generators(map root) {
-    bind("add", add_immediate);
+map generators(map root) {
+    map(op_add, set_tag(add_immediate, tag_function)),
+        op_jump, set_tag
+        ,
 }
 

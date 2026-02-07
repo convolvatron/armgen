@@ -44,22 +44,21 @@ static inline void *allocate(region r, u64 length) {
 #define min(_x, _y) (((_x) < (_y))?(_x):(_y))
 
 #define concatenate(_r, ...) concatenate_internal(_r, __VA_ARGS__, NOT_A_VALUE)
-#define map(_r, ...) map_internal(_r, __VA_ARGS__, NOT_A_VALUE)
+#define new_map(_r, ...) map_internal(_r, __VA_ARGS__, NOT_A_VALUE)
+#define new_map_string(_r, ...) map_string_internal(_r, __VA_ARGS__, NOT_A_VALUE)
+
+typedef value map;
 
 string concatenate_internal(region r, ...);
-
 string print(region r, string s);
-
 string constant(region r, u64 value, bits length);
-
-// a program is the address of a block entry point
-typedef value program;
 
 // unix
 region mmap_region(region r);
 region malloc_region();
-string execute(region r, program instructions, value input);
+string execute(region r, string instructions, value input);
 #include <alloca.h>
 u64 to_number(value x);
 value get_default(value in, value key, value otherwise);
 
+#include <instructions.h>

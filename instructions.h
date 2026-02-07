@@ -1,4 +1,3 @@
-typedef u8 reg;
 
 typedef struct context {
     region r;
@@ -15,27 +14,20 @@ typedef struct instruction_set{
     reg arguments[6];
     reg link_register;
     reg equal_flag;
-    instruction_definition *defs;
-
-    string (*branch)(context, reg cond, string truth, string falsity);    // cant use this to implement a loop - probably for the best..this is really a ternary?
+    map operators;
 } *instruction_set;
 
-struct instruction_definition {
-    char *name;
-    Oid oid;
-    void (*f)()
-} *instruction_definition;
 
-instruction_definition instructions [] ={
-    {"add", 1},
-    {"jump", 2},
-    {"condition", 3},
-    {"print", 4},
-    {"get_tag", 5},
-    {"length", 6},
-    {"syscall", 7},
-    {"move", 8},
-    {"get", 9},
-    {"allocate", 10},
-    {"equal", 11},            
-}
+enum operators {
+    op_add = 1,
+    op_jump = 2,
+    op_condition = 3,
+    op_print = 4,
+    op_tagof = 5,
+    op_length = 6,
+    op_syscall = 7,
+    op_move = 8,
+    op_get = 9,
+    op_allocate = 10,
+};
+    

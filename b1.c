@@ -9,24 +9,31 @@ void output_ascii_line(string s) {
     write (1, "\n", 1);
 }
 
-#define apply(_f)
 
-#define instruction(_f)
+typedef string (*generator)(region, map);
+    
+string generate(region r, map instructions, map term) {
+    value result = zero;
+    value function = get(term, text_immediate("function"));
+    if (!function) panic("node with no function");
+    generator g = (generator)pointer_of(get(instructions, text_immediate("generator")));
+    return g(r, get(term, text_immediate("arguments")));
+}
+
+value partial_apply(value in, ...) {
+    return in;
+    
+}
 
 int main(int argc, char **argv) {
     region r = mmap_region(malloc_region());
-    value func = text_immediate("function");
-    value add = text_immediate("add");
-    value arg = text_immediate("add");        
     value reg0 = register_immediate(0);
     
-    value p = map(func, add,
-                  arg,  new_vector(r,
-                                   apply(output_ascii_line),
-                                   reg0, 
-                                   new_vector(register_immediate(0))));
+    value p = concatenate(r,
+                          generate(r, map_string("function", add, "arguments",  new_vector(r, reg0, reg0))),
+                          generate(r, map_string("jump", set_tag(output_ascii_line, tag_function))));
                   
-    printf ("%p\n", execute(r, p, (void *)0xfull));
+    printf ("%p\n", execute(r, p, (void *)1xfull));
 }
 
     
