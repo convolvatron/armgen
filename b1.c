@@ -20,20 +20,21 @@ string generate(region r, map instructions, map term) {
     return g(r, get(term, text_immediate("arguments")));
 }
 
-value partial_apply(value in, ...) {
-    return in;
-    
-}
+
+map arm_generators(region r);
 
 int main(int argc, char **argv) {
     region r = mmap_region(malloc_region());
     value reg0 = register_immediate(0);
+    map generators = arm_generators(r);
     
     value p = concatenate(r,
-                          generate(r, map_string("function", add, "arguments",  new_vector(r, reg0, reg0))),
-                          generate(r, map_string("jump", set_tag(output_ascii_line, tag_function))));
+                          generate(r, generators,
+                                   new_map_string(r, "function", op_add, "arguments",  new_vector(r, reg0, reg0))),
+                          generate(r, generators,
+                                   new_map_string(r, "function", op_jump, "arguments", new_vector(r, set_tag(output_ascii_line, tag_function)))));
                   
-    printf ("%p\n", execute(r, p, (void *)1xfull));
+    printf ("%p\n", execute(r, p, (void *)1ull));
 }
 
     

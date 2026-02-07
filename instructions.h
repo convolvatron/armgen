@@ -11,9 +11,7 @@ typedef struct context {
 // memories would be nice too
 // this goes away for the most part? at least the instructions, they are indirected through oids
 typedef struct instruction_set{
-    reg arguments[6];
-    reg link_register;
-    reg equal_flag;
+    map arguments;
     map operators;
 } *instruction_set;
 

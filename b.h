@@ -43,15 +43,7 @@ static inline void *allocate(region r, u64 length) {
 
 #define min(_x, _y) (((_x) < (_y))?(_x):(_y))
 
-#define concatenate(_r, ...) concatenate_internal(_r, __VA_ARGS__, NOT_A_VALUE)
-#define new_map(_r, ...) map_internal(_r, __VA_ARGS__, NOT_A_VALUE)
-#define new_map_string(_r, ...) map_string_internal(_r, __VA_ARGS__, NOT_A_VALUE)
 
-typedef value map;
-
-string concatenate_internal(region r, ...);
-string print(region r, string s);
-string constant(region r, u64 value, bits length);
 
 // unix
 region mmap_region(region r);

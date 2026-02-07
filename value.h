@@ -48,6 +48,7 @@ static inline value immediate(region r, u64 x) {
 }
 
 extern value map_internal(region, ...);
+extern value map_string_internal(region, ...);
 extern value vector_internal(region, ...);
 #define map(_r, ...) map_internal(_r, __VA_ARGS__, NOT_A_VALUE)
 #define new_vector(_r, ...) vector_internal(_r)
@@ -103,3 +104,13 @@ string coerce_number(region r, string in, bits target) ;
 static inline s64 from_signed(value x) {
     return 0;
 }
+
+#define concatenate(_r, ...) concatenate_internal(_r, __VA_ARGS__, NOT_A_VALUE)
+#define new_map(_r, ...) map_internal(_r, __VA_ARGS__, NOT_A_VALUE)
+#define new_map_string(_r, ...) map_string_internal(_r, __VA_ARGS__, NOT_A_VALUE)
+string concatenate_internal(region r, ...);
+
+string print(region r, string s);
+string constant(region r, u64 value, bits length);
+
+typedef value map;
