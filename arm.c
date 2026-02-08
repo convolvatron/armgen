@@ -187,7 +187,7 @@ static string add(region r, map parameters) {
 
 instruction_set arm_instruction_set(region r) {
     instruction_set s = allocate(r, sizeof(struct instruction_set));
-    s->arguments = new_vector(0, 1, 2, 3, 4, 5);
+    s->arguments = new_vector(r, 0, 1, 2, 3, 4, 5);
     s->operators = map(r,
                        op_add, set_tag(add_immediate, tag_function),
                        op_jump, set_tag(jump, tag_function),

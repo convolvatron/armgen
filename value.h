@@ -5,9 +5,9 @@
 typedef value reg;
 typedef value boolean;
 typedef value vector;
+extern value one;
+extern value zero;
 
-value one = (value)1;
-value zero = (value)0;
 
 #define true ((void *)(1))
 #define false ((void *)(0))
