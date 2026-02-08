@@ -1,4 +1,4 @@
-#include <b.h>
+#include <runtime.h>
 #include <stdio.h>
 #include <unistd.h>
 
@@ -27,11 +27,23 @@ string generate(region r, map instructions, map term) {
 
 instruction_set arm_instruction_set(region r);
 
+int count (...) {
+    /*        int i = 0;
+        va_list __a;         
+        for (va_start(__a); va_arg(__a, value) != NOT_A_VALUE; i++); 
+        return i;*/
+    return argcount();
+        
+}
+    
 int main(int argc, char **argv) {
+    printf(" count: %d\n", count(1, 2, 3, 4, 5, NOT_A_VALUE));
+    
     region r = mmap_region(malloc_region());
     value reg0 = register_immediate(0);
     instruction_set s = arm_instruction_set(r);
-    
+
+
     value p = concatenate(r,
                           generate(r, s,
                                    new_map_string(r, "function", op_add, "arguments",

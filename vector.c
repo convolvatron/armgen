@@ -1,4 +1,4 @@
-#include <b.h>
+#include <runtime.h>
 
 vector vector_internal(region r, ...) {
     u64 args = argcount(r);
@@ -9,3 +9,7 @@ vector vector_internal(region r, ...) {
     return v;
 }
 
+
+vector vector_get(value v, value k) {
+    panic("vector get not implement");
+}

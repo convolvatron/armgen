@@ -1,4 +1,4 @@
-#include <b.h>
+#include <runtime.h>
 
 value partial_apply_internal(region r, instruction_set s, value in, ...) {
     let bindings = argcount() - 3;

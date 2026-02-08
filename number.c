@@ -1,17 +1,44 @@
-#include <b.h>
+#include <runtime.h>
 
 // we're going to say this is true including zero extension. is this right?
 // location has type information
-string number_equal(location x, location y) {
+string number_equal(value x, value y) {
     // is length static or dynamic? we're gonna have to ask my type
     // (min (length x) (length y))
-    // 
+    //
+    return zero;
 }
 
-string number_get(context c) {
-    // !!(1<<x &)
+// is this..|keys|?
+u64 length (value s) {
+    if (tag_of(s) == tag_immediate) {
+        if ((s == zero || (s == one))) {
+            return 1;
+        }
+        return 56;
+    }
+    if (tag_of(s) == tag_string) {
+        u64 *x = pointer_of(s);
+        return *x;
+    }
+    panic("length of unknown representation");
 }
 
-string number_hash(x) {
-   jump
+
+value number_get(value in, value key) {
+    u64 keyv = to_number(key);
+    u64 *base;
+    
+    if (tag_of(in) == tag_immediate) {
+        base = (u64 *)&in;
+    } else {
+        if (tag_of(in) == tag_string) {
+            base = string_contents(in);
+        }
+    }
+
+    if (keyv > length(in)) {
+        return set_tag(0, tag_empty);
+    }
+    return (base[keyv>>6] & (1ull<<(keyv&63ull)))?one:zero;
 }
