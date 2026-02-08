@@ -6,7 +6,7 @@ typedef void *value;
 #define tag_mapvv 3
 #define tag_register 4
 #define tag_status 5 // maybe?
-#define tag_memory 6
+#define tag_memory 6 // this maye be temporary, we need reg/mem imm/mem and offset/shift
 #define tag_text 7
 #define tag_oid 8 // we're using a 64 bit subset today
 #define tag_function 9 // an entry point w/ r0-r8 as args, this is both synthetic and C, although we may have to distinguish

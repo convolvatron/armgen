@@ -114,3 +114,4 @@ string print(region r, string s);
 string constant(region r, u64 value, bits length);
 
 typedef value map;
+#define is_negative(_x) false

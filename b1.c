@@ -17,22 +17,28 @@ string generate(region r, map instructions, map term) {
     value function = get(term, text_immediate("function"));
     if (!function) panic("node with no function");
     generator g = (generator)pointer_of(get(instructions, text_immediate("generator")));
-    return g(r, get(term, text_immediate("arguments")));
+    string out = g(r, get(term, text_immediate("arguments")));
+    if (length(out) != 32) {
+        panic("weird gen");
+    }
+    return out;
 }
 
 
-map arm_generators(region r);
+instruction_set arm_instruction_set(region r);
 
 int main(int argc, char **argv) {
     region r = mmap_region(malloc_region());
     value reg0 = register_immediate(0);
-    map generators = arm_generators(r);
+    instruction_set s = arm_instruction_set(r);
     
     value p = concatenate(r,
-                          generate(r, generators,
-                                   new_map_string(r, "function", op_add, "arguments",  new_vector(r, reg0, reg0))),
-                          generate(r, generators,
-                                   new_map_string(r, "function", op_jump, "arguments", new_vector(r, set_tag(output_ascii_line, tag_function)))));
+                          generate(r, s,
+                                   new_map_string(r, "function", op_add, "arguments",
+                                                  new_vector(r, reg0, reg0))),
+                          generate(r, s,
+                                   new_map_string(r, "function", op_jump, "arguments",
+                                                  new_vector(r, set_tag(output_ascii_line, tag_function)))));
                   
     printf ("%p\n", execute(r, p, (void *)1ull));
 }
