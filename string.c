@@ -1,4 +1,4 @@
-#include <b.h>
+#include <runtime.h>
 
 
 static void cat_one(string source, u64 *offset, u64 *working, u64 **base) {
@@ -104,7 +104,8 @@ string print_hex(region r, string s) {
     return new;
 }
 
-string coerce(region r, string in, bits target) {
+// why isn't this just constant? we should be checking for overflow regardless
+string coerce_number(region r, string in, bits target) {
     if (length(in) == target) {
         return in;
     }
@@ -126,4 +127,14 @@ string coerce(region r, string in, bits target) {
     }
     return constant(r, result, target);
 
+}
+
+
+static boolean vstrcmp(char *x, string a) {
+    int i = 0;
+    u8 *ab = (u8*)string_contents(a);
+    for (;x[i];i++);
+    if ((i * 8) != length(a)) return false;
+    for (int j = 0;j < i; j++) if (ab[j] != x[j]) return false;
+    return true;
 }

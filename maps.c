@@ -1,4 +1,4 @@
-#include <b.h>
+#include <runtime.h>
 #include <instructions.h>
 // a map for me 
 u64 entry_points
@@ -24,6 +24,3 @@ string generate_equal(context c, x, y) {
     
 }
 
-
-void generate_runtime(retion r, instruction set_i) {
-}

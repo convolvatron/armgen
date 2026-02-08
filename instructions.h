@@ -1,4 +1,3 @@
-typedef u8 reg;
 
 typedef struct context {
     region r;
@@ -10,15 +9,23 @@ typedef struct context {
 
 // add a declarative target  - at the minimum we'd like to capture register and immediate right now, but
 // memories would be nice too
+// this goes away for the most part? at least the instructions, they are indirected through oids
 typedef struct instruction_set{
-    reg arguments[6];
-    reg link_register;
-    reg equal_flag;
-    value (*jump)(context, reg);
-    value (*allocate)(context, reg);
-    value (*add)(context, reg d, reg a, reg b); // (a, b)->value
-    value (*equal)(context, reg a, reg b); // (a, b)->value
-    value (*load)(context, reg dest, reg source);
-    value (*load_tag)(context, reg dest, reg source);
-    string (*branch)(context, reg cond, string truth, string falsity);    // cant use this to implement a loop - probably for the best..this is really a ternary?
+    map arguments;
+    map operators;
 } *instruction_set;
+
+
+enum operators {
+    op_add = 1,
+    op_jump = 2,
+    op_condition = 3,
+    op_print = 4,
+    op_tagof = 5,
+    op_length = 6,
+    op_syscall = 7,
+    op_move = 8,
+    op_get = 9,
+    op_allocate = 10,
+};
+    

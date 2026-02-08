@@ -1,7 +1,8 @@
 test: ./b1
 	./b1
 
-SOURCES = b1.c arm.c string.c value.c rtmap.c unix.c type.c
+SOURCES = b1.c arm.c string.c value.c map.c unix.c vector.c number.c
+
 b1: $(SOURCES)
 	cc $(SOURCES) -std=c2x -I. -g -o b1
 

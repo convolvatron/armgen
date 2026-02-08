@@ -1,4 +1,4 @@
-#include <b.h>
+#include <runtime.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -50,7 +50,7 @@ region mmap_region(region r) {
 }
 
 
-string execute(region r, program instructions, value input)
+string execute(region r, string instructions, value input)
 {
     string code = concatenate(r, instructions);
     u64 clen = padlog(length(code), 3, 0);

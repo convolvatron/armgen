@@ -33,14 +33,22 @@ static inline string sallocate(region r, bits length) {
     return x;
 }
 
-static inline u64 to_number(value x) {
-    if ((tag_of(x) == tag_immediate) || (tag_of(x) == tag_register) )
-	return (u64)x;
-    panic("unhandled to_number case");
-}
 
 #define string_contents(_x) ((tag_of(_x) == tag_immediate)?(u64 *)&_x:((u64 *)pointer_of(_x))+1)
 
+static inline u64 to_number(value x) {
+    if (tag_of(x) == tag_immediate) {
+        return (u64)x;
+    }
+    if (tag_of(x) == tag_string) {
+        u64 *p = pointer_of(x);
+        if (length(x)> 63)  {
+            panic("string integer coersion too big");
+        }
+        return (*string_contents(p));
+    }
+    panic ("unhandled tag in cast to number");
+}
 
 // we have this region version .. just in case we change the type layout?
 static inline value immediate(region r, u64 x) {
@@ -48,6 +56,7 @@ static inline value immediate(region r, u64 x) {
 }
 
 extern value map_internal(region, ...);
+extern value map_string_internal(region, ...);
 extern value vector_internal(region, ...);
 #define map(_r, ...) map_internal(_r, __VA_ARGS__, NOT_A_VALUE)
 #define new_vector(_r, ...) vector_internal(_r)
@@ -59,9 +68,10 @@ extern value vector_internal(region, ...);
 	*(u64 *)m = (sizeof(_x) - 1) * 8;				\
 	init = 1;\
      }						\
-    ((value)m);})
-/*
-static inline value text_immediate(region r, char *x) {
+    set_tag(((value)m), tag_string);\
+})
+
+static inline value new_text(region r, char *x) {
     int len = 0;
     for (char *i = x; *i; i++, len+=8);
 
@@ -70,7 +80,7 @@ static inline value text_immediate(region r, char *x) {
     for (char *i = x; *i; i++, len+=8) *dst++ = *i;
     return new;
 }
-*/
+
 static inline value signed_immediate(region r, s64 x) {
     if (x < 0)
 	return map(text_immediate("negative"), true, text_immediate("value"), immediate(r, -x));
@@ -87,16 +97,29 @@ static inline boolean is_negative(value x) {
 }
 
 
-
 static inline boolean equal(value a, value b) {
     return true;
 }
 
+/*
 #define foreach(__i, __v) for (value _count = 0, _i ;\\
 			       _count< length(__v);\\
 			       _i = ((u64 *)contents_of(__v))[_count], _count = (value)(((u64) i) + count))
-string coerce(region r, string in, bits target) ;
+*/
+
+string coerce_number(region r, string in, bits target) ;
 
 static inline s64 from_signed(value x) {
     return 0;
 }
+
+#define concatenate(_r, ...) concatenate_internal(_r, __VA_ARGS__, NOT_A_VALUE)
+#define new_map(_r, ...) map_internal(_r, __VA_ARGS__, NOT_A_VALUE)
+#define new_map_string(_r, ...) map_string_internal(_r, __VA_ARGS__, NOT_A_VALUE)
+string concatenate_internal(region r, ...);
+
+string print(region r, string s);
+string constant(region r, u64 value, bits length);
+
+typedef value map;
+#define is_negative(_x) false
