@@ -15,6 +15,7 @@ static value link_register;
 
 #define is_memory(_m) (tag_of(_m) == tag_memory)
 #define is_reg(_r) (tag_of(_r) == tag_register)
+#define is_immediate(_r) (tag_of(_r) == tag_immediate)
 
 // reg d, u16 value, int offset, boolean zero)
 //movz https://developer.arm.com/documentation/ddi0602/2025-12/Base-Instructions/MOVZ--Move-wide-with-zero-
@@ -122,9 +123,9 @@ static string extract(region r, map a) {
                        constant(r, 0b10100110, 8),
 		       constant(r, 0, 1), // in the 64 bit variant N is always zero
                        encode_number_default(r, a, from, 6, 0),
-                       encode_number_default(r, a, to, 6, 63),
-                       encoce_reg(a, dest),
-                       encoce_reg(a, source));                       
+                       encode_number_default(r, a, to, 6, imm(63)),
+                       encode_reg(a, dest),
+                       encode_reg(a, source));                       
 }
 
 // page 555 - how am i supposed to even manage these refernces
@@ -146,13 +147,20 @@ string generate_shift(region r, map a) {
     value bits = get(a, text_immediate("bits"));
     if (is_negative(bits)) {
 	s64 offset = from_signed(bits);
-	return extract(r, d, s, offset, 64-offset));
+	return extract(r, map(r, "destination", get(a, "destination"),
+                              "source", get(a, "destination"),
+                              "from", offset,
+                              "to", 64-offset));
     }
     panic ("oddly, positive shifts aren't supported");
 }
 
-static string arm_get_tag(region r, reg dest, reg source) {
-    return extract(r, dest, source, 56, 63);
+//extract(r, dest, source, 56, 63);
+static string arm_get_tag(region r, map a) {
+    return generate_shift(r, map(r,
+                                 "destination", get(a, "destination"),
+                                 "source", get(a, "destination"),
+                                 "bits", imm(56)));
 }
 
 
@@ -162,7 +170,7 @@ static string move(region r, map parameters) {
     if (is_reg(destination) && is_reg(source))  return mov_reg(r, parameters);
     if (is_reg(destination) && is_memory(source))  return load(r, parameters);
     if (is_memory(destination) && is_memory(source))  return store(r, parameters);
-    if (is_memory(destination) && is_immediate(source))  move_immediate store(r, parameters);
+    if (is_memory(destination) && is_immediate(source))  return move_immediate(r, parameters);
     panic("unsuported move pair");
 }
 
@@ -173,19 +181,20 @@ static string add(region r, map parameters) {
     if (is_reg(destination) && is_reg(source))  return mov_reg(r, parameters);
     if (is_reg(destination) && is_memory(source))  return load(r, parameters);
     if (is_memory(destination) && is_memory(source))  return store(r, parameters);
-    if (is_memory(destination) && is_immediate(source))  move_immediate store(r, parameters);
+    if (is_memory(destination) && is_immediate(source))  move_immediate(r, parameters);
     panic("unsuported move pair");
 }
 
-intruction_set arm_instruction_set(region r) {
+instruction_set arm_instruction_set(region r) {
     instruction_set s = allocate(r, sizeof(struct instruction_set));
-    r->arguments = new_vector(0, 1, 2, 3, 4, 5);
-    r->operators = map(r,
+    s->arguments = new_vector(0, 1, 2, 3, 4, 5);
+    s->operators = map(r,
                        op_add, set_tag(add_immediate, tag_function),
                        op_jump, set_tag(jump, tag_function),
                        op_syscall, set_tag(svc, tag_function),
-                       op_tag, set_tag(arm_get_tag, tag_function));
-    link_register = reg_imm(30);
-    for (int i = 0; i < 32; i++) regs[i] = encode_constant(r, i, 5); 
+                       op_tagof, set_tag(arm_get_tag, tag_function));
+    link_register = register_immediate(30);
+    for (int i = 0; i < 32; i++) regs[i] = constant(r, i, 5);
+    return s;
 }
 

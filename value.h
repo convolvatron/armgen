@@ -33,14 +33,22 @@ static inline string sallocate(region r, bits length) {
     return x;
 }
 
-static inline u64 to_number(value x) {
-    if ((tag_of(x) == tag_immediate) || (tag_of(x) == tag_register) )
-	return (u64)x;
-    panic("unhandled to_number case");
-}
 
 #define string_contents(_x) ((tag_of(_x) == tag_immediate)?(u64 *)&_x:((u64 *)pointer_of(_x))+1)
 
+static inline u64 to_number(value x) {
+    if (tag_of(x) == tag_immediate) {
+        return (u64)x;
+    }
+    if (tag_of(x) == tag_string) {
+        u64 *p = pointer_of(x);
+        if (length(x)> 63)  {
+            panic("string integer coersion too big");
+        }
+        return (*string_contents(p));
+    }
+    panic ("unhandled tag in cast to number");
+}
 
 // we have this region version .. just in case we change the type layout?
 static inline value immediate(region r, u64 x) {

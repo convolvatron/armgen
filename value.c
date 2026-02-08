@@ -15,20 +15,6 @@ u64 length (value s) {
     panic("length of unknown representation");
 }
 
-u64 to_number(value x) {
-    if (tag_of(x) == tag_immediate) {
-        return (u64)x;
-    }
-    if (tag_of(x) == tag_string) {
-        u64 *p = pointer_of(x);
-        if (length(x)> 63)  {
-            panic("string integer coersion too big");
-        }
-        return (*string_contents(p));
-    }
-    panic ("unhandled tag in cast to number");
-}
-
 value get(value in, value key) {
     u64 keyv = to_number(key);
     u64 *base;
