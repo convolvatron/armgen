@@ -2,7 +2,7 @@
 
 // we're going to say this is true including zero extension. is this right?
 // location has type information
-string number_equal(value x, value y) {
+boolean number_equal(value x, value y) {
     // is length static or dynamic? we're gonna have to ask my type
     // (min (length x) (length y))
     //
@@ -17,7 +17,7 @@ u64 length (value s) {
         }
         return 56;
     }
-    if (tag_of(s) == tag_string) {
+    if (tag_of(s) == tag_bitstring) {
         u64 *x = pointer_of(s);
         return *x;
     }
@@ -32,7 +32,7 @@ value number_get(value in, value key) {
     if (tag_of(in) == tag_immediate) {
         base = (u64 *)&in;
     } else {
-        if (tag_of(in) == tag_string) {
+        if (tag_of(in) == tag_bitstring) {
             base = string_contents(in);
         }
     }

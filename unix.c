@@ -50,9 +50,9 @@ region mmap_region(region r) {
 }
 
 
-string execute(region r, string instructions, value input)
+value execute(region r, bitstring instructions, value input)
 {
-    string code = concatenate(r, instructions);
+    bitstring code = concatenate(r, instructions);
     u64 clen = padlog(length(code), 3, 0);
     
     u32 *cs = (u32 *)(void *)(string_contents(code));
@@ -63,7 +63,7 @@ string execute(region r, string instructions, value input)
         panic("mprotect set execution");
     }
     
-    string (*n)(string) = (void *)cs;
+    value (*n)(value) = (void *)cs;
     return n(input);
 }
 

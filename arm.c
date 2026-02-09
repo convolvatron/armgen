@@ -2,15 +2,15 @@
 
 typedef value location;
 typedef value expression;
-typedef string (*generator)(region r, ...);
+typedef bitstring (*generator)(region r, ...);
 
 static value regs[32];
 static value link_register;
 
 // we only need to encode these once
-#define encode_reg(_m, _n) regs[to_number(get(_m, text_immediate(#_n)))]
-#define encode_number(_r, _m, _n, _sz) coerce_number(_r, get(_m, text_immediate(#_n)), _sz)
-#define encode_number_default(_r, _m, _n, _sz, _def) constant(_r, to_number(get_default(_m, text_immediate(#_n), _def)), _sz)
+#define encode_reg(_m, _n) regs[to_number(get(_m, utf8_immediate(#_n)))]
+#define encode_number(_r, _m, _n, _sz) coerce_number(_r, get(_m, utf8_immediate(#_n)), _sz)
+#define encode_number_default(_r, _m, _n, _sz, _def) constant(_r, to_number(get_default(_m, utf8_immediate(#_n), _def)), _sz)
 #define size(_m) one
 
 #define is_memory(_m) (tag_of(_m) == tag_memory)
@@ -19,8 +19,8 @@ static value link_register;
 
 // reg d, u16 value, int offset, boolean zero)
 //movz https://developer.arm.com/documentation/ddi0602/2025-12/Base-Instructions/MOVZ--Move-wide-with-zero-
-static string move_immediate(region r, value a) {
-    u16 offset = to_number(get_default(a, text_immediate("offset"), 0));    
+static bitstring move_immediate(region r, value a) {
+    u16 offset = to_number(get_default(a, utf8_immediate("offset"), 0));    
     // "hw" encodes the amount by which to shift the immediate left, either 0 (the default), 16(1), 32(2) or 48(3),
     u64 hw = offset/16;
     if (hw*16 != offset) {
@@ -37,11 +37,11 @@ static string move_immediate(region r, value a) {
 		       encode_reg( a, destination));
 }
 
-static string move_u64(region r, map a) {
+static bitstring move_u64(region r, map a) {
     // type checking - schematime!
-    reg destination = get(a, text_immediate("destination"));
-    u64 val = to_number(get(a, text_immediate("value")));
-    string output = 0;
+    reg destination = get(a, utf8_immediate("destination"));
+    u64 val = to_number(get(a, utf8_immediate("value")));
+    bitstring output = 0;
     for (int i = 0 ; i < 64; i += 16) {
         u64 slice = (val >> i) & 65535;
 	if (slice) 
@@ -56,7 +56,7 @@ static string move_u64(region r, map a) {
 
 // add
 // https://developer.arm.com/documentation/ddi0596/2020-12/Base-Instructions/ADD--immediate---Add--immediate--
-string add_immediate(region r, value a) {
+bitstring add_immediate(region r, value a) {
     // hardcoded internal shift, op and S flags (??)
     return concatenate(r,
                        constant(r, 0b1001000100, 10),
@@ -67,7 +67,7 @@ string add_immediate(region r, value a) {
 
 // ldr
 //https://developer.arm.com/documentation/ddi0596/2021-06/Base-Instructions/LDR--immediate---Load-Register--immediate--
-static string load(region r, map a) {
+static bitstring load(region r, map a) {
     return concatenate(r,
                        size(a), 
 		       constant(r, 0b011100101, 9),
@@ -77,7 +77,7 @@ static string load(region r, map a) {
 }
 
 // there are pre-and post index variants, which steal some bits from the offset
-static string store(region r, map a) {
+static bitstring store(region r, map a) {
     return concatenate(r,
                        one,
                        size(a), 
@@ -93,8 +93,8 @@ static string store(region r, map a) {
 // should be imm and register demux
 // return
 //https://developer.arm.com/documentation/ddi0602/2025-12/Base-Instructions/RET--Return-from-subroutine-
-string jump(region r, value parameters) {
-    reg target = get_default(parameters, text_immediate("target"), link_register);
+bitstring jump(region r, value parameters) {
+    reg target = get_default(parameters, utf8_immediate("target"), link_register);
     return concatenate(r,
                        constant(r, 0b1101011001011111000000, 22),
                        constant(r, to_number(target), 5),
@@ -102,7 +102,7 @@ string jump(region r, value parameters) {
 }
 
 
-string exception_generation(region r, u8 opc, u16 imm, u8 op2, u8 ll) {
+bitstring exception_generation(region r, u8 opc, u16 imm, u8 op2, u8 ll) {
     return concatenate(r, constant(r, 0b11010100, 8),
                        constant(r, opc, 3),
                        constant(r, imm, 16),
@@ -111,12 +111,12 @@ string exception_generation(region r, u8 opc, u16 imm, u8 op2, u8 ll) {
 }
 
 
-static string svc (region r, u16 opcode) {
+static bitstring svc (region r, u16 opcode) {
     return exception_generation(r, 0, opcode, 0, 1);
 }
 
 // ubfm
-static string extract(region r, map a) {
+static bitstring extract(region r, map a) {
     // reg dest, reg source, u64 from, u64 to    
     return concatenate(r,
 		       size(a),
@@ -129,7 +129,7 @@ static string extract(region r, map a) {
 }
 
 // page 555 - how am i supposed to even manage these refernces
-static string mov_reg(region r, map a) {
+static bitstring mov_reg(region r, map a) {
     return concatenate(r,
 		       size(a),
                        constant(r, 0b0101010, 8),
@@ -143,30 +143,34 @@ static string mov_reg(region r, map a) {
 
 // in rule land we should try to fold this into instructions that support
 // internal shifts. 
-string generate_shift(region r, map a) {
-    value bits = get(a, text_immediate("bits"));
+bitstring generate_shift(region r, map a) {
+    value bits = get(a, utf8_immediate("bits"));
     if (is_negative(bits)) {
 	s64 offset = from_signed(bits);
-	return extract(r, map(r, "destination", get(a, "destination"),
-                              "source", get(a, "destination"),
-                              "from", offset,
-                              "to", 64-offset));
+        value d = utf8_immediate("destination");
+        value s= utf8_immediate("source");        
+	return extract(r, map(r, d, get(a, d),
+                              s, get(a, s),
+                              utf8_immediate("from"), offset,
+                              utf8_immediate("to"), 64-offset));
     }
     panic ("oddly, positive shifts aren't supported");
 }
 
 //extract(r, dest, source, 56, 63);
-static string arm_get_tag(region r, map a) {
+static bitstring arm_get_tag(region r, map a) {
+    value d = utf8_immediate("destination");
+    value s= utf8_immediate("source");            
     return generate_shift(r, map(r,
-                                 "destination", get(a, "destination"),
-                                 "source", get(a, "destination"),
-                                 "bits", imm(56)));
+                                 d, get(a, d),
+                                 s, get(a, s),
+                                 utf8_immediate("bits"), imm(56)));
 }
 
 
-static string move(region r, map parameters) {
-    reg destination = get(parameters, text_immediate("destination"));
-    reg source = get(parameters, text_immediate("destination"));
+static bitstring move(region r, map parameters) {
+    reg destination = get(parameters, utf8_immediate("destination"));
+    reg source = get(parameters, utf8_immediate("destination"));
     if (is_reg(destination) && is_reg(source))  return mov_reg(r, parameters);
     if (is_reg(destination) && is_memory(source))  return load(r, parameters);
     if (is_memory(destination) && is_memory(source))  return store(r, parameters);
@@ -175,9 +179,9 @@ static string move(region r, map parameters) {
 }
 
 // there is a memory-memory add!
-static string add(region r, map parameters) {
-    reg destination = get(parameters, text_immediate("destination"));
-    reg source = get(parameters, text_immediate("destination"));
+static bitstring add(region r, map parameters) {
+    reg destination = get(parameters, utf8_immediate("destination"));
+    reg source = get(parameters, utf8_immediate("destination"));
     if (is_reg(destination) && is_reg(source))  return mov_reg(r, parameters);
     if (is_reg(destination) && is_memory(source))  return load(r, parameters);
     if (is_memory(destination) && is_memory(source))  return store(r, parameters);

@@ -9,7 +9,7 @@ typedef unsigned char u8;
 typedef unsigned short u16;
 typedef unsigned u32;
 typedef u64 bits;
-typedef u64 *string;
+typedef u64 *bitstring;
 typedef unsigned _BitInt(128) u128;
 typedef u8 bit;
 
@@ -50,7 +50,7 @@ static inline void *allocate(region r, u64 length) {
 // unix
 region mmap_region(region r);
 region malloc_region();
-string execute(region r, string instructions, value input);
+value execute(region r, bitstring instructions, value input);
 #include <alloca.h>
 u64 to_number(value x);
 value get_default(value in, value key, value otherwise);

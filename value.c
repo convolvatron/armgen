@@ -20,7 +20,7 @@ value get(value in, value key) {
     switch (tag_of(in)) {
     case tag_mapvv:  return mapvv_get(in, key);
     case tag_vector:  return vector_get(in, key);
-    case tag_string:  return number_get(in, key);                        
+    case tag_bitstring:  return number_get(in, key);                        
     }
     panic("unknown get");
 }

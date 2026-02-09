@@ -1,7 +1,7 @@
 
 typedef void *value;
 #define tag_immediate 0
-#define tag_string 1
+#define tag_bitstring 1
 #define tag_region 2
 #define tag_mapvv 3
 #define tag_register 4
@@ -11,7 +11,9 @@ typedef void *value;
 #define tag_oid 8 // we're using a 64 bit subset today
 #define tag_function 9 // an entry point w/ r0-r8 as args, this is both synthetic and C, although we may have to distinguish
 #define tag_vector 10
+#define tag_utf8 10
 #define tag_empty 63
+
 
 typedef u8 tag;
 static inline value set_tag(value x, u64 tag) {

@@ -1,7 +1,7 @@
 #include <runtime.h>
 
 
-static void cat_one(string source, u64 *offset, u64 *working, u64 **base) {
+static void cat_one(bitstring source, u64 *offset, u64 *working, u64 **base) {
     u64 *sbase = string_contents(source);
     u64 total = length(source);
     
@@ -19,8 +19,8 @@ static void cat_one(string source, u64 *offset, u64 *working, u64 **base) {
     }
 }
 
-string substring(region r, string source, u64 start_inc, u64 end_exc) {
-    string new = sallocate(r, end_exc - start_inc);
+bitstring substring(region r, bitstring source, u64 start_inc, u64 end_exc) {
+    bitstring new = sallocate(r, end_exc - start_inc);
     u64 dst = 0;
 
     // not..really...use cat_one
@@ -30,7 +30,7 @@ string substring(region r, string source, u64 start_inc, u64 end_exc) {
     return new;
 }
 
-string concatenate_internal(region r, ...) {
+bitstring concatenate_internal(region r, ...) {
     u64 total = 0;
     u64 count = 0;    
     valargs(r, i) {
@@ -38,13 +38,13 @@ string concatenate_internal(region r, ...) {
         total += length(i);
     }
     // so i can run them backwards
-    string *temp = alloca(count*sizeof(string));
+    bitstring *temp = alloca(count*sizeof(bitstring));
     int i = 0;
     valargs(r, source) {
         temp[i++] = source;
     }
     
-    string new = sallocate(r, total);
+    bitstring new = sallocate(r, total);
     u64 *base = string_contents(new);
     u64 offset = 0, working = 0;
 
@@ -59,8 +59,8 @@ string concatenate_internal(region r, ...) {
     return new;
 }
 
-string constant(region r, u64 value, bits length) {
-    string new = sallocate(r, length);
+bitstring constant(region r, u64 value, bits length) {
+    bitstring new = sallocate(r, length);
     *string_contents(new) = value;
     return new;
 }
@@ -74,9 +74,9 @@ string constant(region r, u64 value, bits length) {
 }
 */
 
-string print(region r, string s) {
+utf8 print(region r, bitstring s) {
     u64 len = length(s);
-    string new = sallocate(r, len*8);
+    utf8 new = sallocate(r, len*8);
     u8 *target = (u8 *)string_contents(new);
     for (s64 i=len-1; i>=0; i--) {
         *target++ = get(s, immediate(r, i))?'1':'0';
@@ -86,12 +86,12 @@ string print(region r, string s) {
 
 static char *hex_digits= "0123456789abcdef";
 
-string print_hex(region r, string s) {
+utf8 print_hex(region r, bitstring s) {
     u64 len = length(s);
-    string new = sallocate(r, len*2+(len/32)*8);
+    bitstring new = sallocate(r, len*2+(len/32)*8);
     u8 *target = (u8 *)string_contents(new);
     for (s64 i=len-4; i >=0 ; i-=4) {
-	string n = substring(r, s, i, i+4);
+	bitstring n = substring(r, s, i, i+4);
 	// macro
 	int nib = *string_contents(n);
         *target++ = hex_digits[nib];
@@ -105,7 +105,7 @@ string print_hex(region r, string s) {
 }
 
 // why isn't this just constant? we should be checking for overflow regardless
-string coerce_number(region r, string in, bits target) {
+bitstring coerce_number(region r, bitstring in, bits target) {
     if (length(in) == target) {
         return in;
     }
@@ -129,8 +129,8 @@ string coerce_number(region r, string in, bits target) {
 
 }
 
-
-static boolean vstrcmp(char *x, string a) {
+/*
+static boolean vstrcmp(char *x, utf8 a) {
     int i = 0;
     u8 *ab = (u8*)string_contents(a);
     for (;x[i];i++);
@@ -138,3 +138,4 @@ static boolean vstrcmp(char *x, string a) {
     for (int j = 0;j < i; j++) if (ab[j] != x[j]) return false;
     return true;
 }
+*/

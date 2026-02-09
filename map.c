@@ -23,17 +23,8 @@ value map_internal(region r, ...)
 	
     value new = set_tag(allocate(r, (count + 1) *64), tag_mapvv);
     value *p = pointer_of(new);
+    *p++=imm(count);
     valargs(r, i) *p++ = i;
     return new;
 }
 
-value map_string_internal(region r, ...)
-{
-    u64 count = 0;
-    valargs(r, i) count++;
-	
-    value new = set_tag(allocate(r, (count + 1) *64), tag_mapvv);
-    value *p = pointer_of(new);
-    valargs(r, i) *p++ = i;
-    return new;
-}
