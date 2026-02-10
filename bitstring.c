@@ -1,9 +1,16 @@
 #include <runtime.h>
 
+u64 bitstring_length(value s) {
+    if (tag_of(s) == tag_bitstring) {
+        u64 *x = pointer_of(s);
+        return *x;
+    }
+    panic("not a bitstring");
+}
 
 static void cat_one(bitstring source, u64 *offset, u64 *working, u64 **base) {
     u64 *sbase = string_contents(source);
-    u64 total = length(source);
+    u64 total = bitstring_length(source);
     
     while (total) {
         u64 xfer = min(total, 64-*offset);
@@ -35,7 +42,7 @@ bitstring concatenate_internal(region r, ...) {
     u64 count = 0;    
     valargs(r, i) {
         count ++; 
-        total += length(i);
+        total += bitstring_length(i);
     }
     // so i can run them backwards
     bitstring *temp = alloca(count*sizeof(bitstring));
@@ -75,7 +82,7 @@ bitstring constant(region r, u64 value, bits length) {
 */
 
 utf8 print(region r, bitstring s) {
-    u64 len = length(s);
+    u64 len = bitstring_length(s);
     utf8 new = sallocate(r, len*8);
     u8 *target = (u8 *)string_contents(new);
     for (s64 i=len-1; i>=0; i--) {
@@ -87,7 +94,7 @@ utf8 print(region r, bitstring s) {
 static char *hex_digits= "0123456789abcdef";
 
 utf8 print_hex(region r, bitstring s) {
-    u64 len = length(s);
+    u64 len = bitstring_length(s);
     bitstring new = sallocate(r, len*2+(len/32)*8);
     u8 *target = (u8 *)string_contents(new);
     for (s64 i=len-4; i >=0 ; i-=4) {
@@ -106,12 +113,13 @@ utf8 print_hex(region r, bitstring s) {
 
 // why isn't this just constant? we should be checking for overflow regardless
 bitstring coerce_number(region r, bitstring in, bits target) {
-    if (length(in) == target) {
+    int len = bitstring_length(in);
+    if (len == target) {
         return in;
     }
     
-    if (length(in) < target) {
-        return concatenate(r, in, constant(r, 0, target-length(in)));
+    if (len < target) {
+        return concatenate(r, in, constant(r, 0, target-len));
     }
 
     u64 result;

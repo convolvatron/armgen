@@ -24,3 +24,19 @@ value get(value in, value key) {
     }
     panic("unknown get");
 }
+
+value mapvv_equal(value m, value key);
+value vector_equal(value m, value key);
+value number_equal(value m, value key);
+
+boolean equal(value a, value b) {
+    if (tag_of(a)  == tag_of(b)){
+        switch (tag_of(a)) {
+        case tag_mapvv:  return mapvv_equal(a, b);
+        case tag_vector:  return vector_equal(a, b);
+        case tag_bitstring:  return number_equal(a, b);                        
+        }
+        panic("unknown equals");
+    }
+    panic("missing generalized equality implementation");
+}

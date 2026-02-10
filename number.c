@@ -6,20 +6,16 @@ boolean number_equal(value x, value y) {
     // is length static or dynamic? we're gonna have to ask my type
     // (min (length x) (length y))
     //
-    return zero;
+    return zero;    
 }
 
 // is this..|keys|?
-u64 length (value s) {
+u64 number_length (value s) {
     if (tag_of(s) == tag_immediate) {
         if ((s == zero || (s == one))) {
             return 1;
         }
         return 56;
-    }
-    if (tag_of(s) == tag_bitstring) {
-        u64 *x = pointer_of(s);
-        return *x;
     }
     panic("length of unknown representation");
 }
@@ -37,7 +33,7 @@ value number_get(value in, value key) {
         }
     }
 
-    if (keyv > length(in)) {
+    if (keyv > number_length(in)) {
         return set_tag(0, tag_empty);
     }
     return (base[keyv>>6] & (1ull<<(keyv&63ull)))?one:zero;

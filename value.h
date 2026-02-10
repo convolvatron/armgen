@@ -37,13 +37,14 @@ static inline bitstring sallocate(region r, bits length) {
 
 #define string_contents(_x) ((tag_of(_x) == tag_immediate)?(u64 *)&_x:((u64 *)pointer_of(_x))+1)
 
+u64 number_length (value s);
 static inline u64 to_number(value x) {
     if (tag_of(x) == tag_immediate) {
         return (u64)x;
     }
     if (tag_of(x) == tag_bitstring) {
         u64 *p = pointer_of(x);
-        if (length(x)> 63)  {
+        if (number_length(x)> 63)  {
             panic("string integer coersion too big");
         }
         return (*string_contents(p));
@@ -60,6 +61,9 @@ extern value map_internal(region, ...);
 extern value vector_internal(region, ...);
 #define map(_r, ...) map_internal(_r, __VA_ARGS__, NOT_A_VALUE)
 #define new_vector(_r, ...) vector_internal(_r)
+
+// in bytes
+static inline u64 utf8_length(value v) {return *(u64 *)v;}
 
 #define utf8_immediate(_x) ({\
     static u8 m[sizeof(_x) + 8];    \
@@ -97,11 +101,7 @@ static inline boolean is_negative(value x) {
     return to_boolean(to_number(is_number(x)) & to_number(get(x, utf8_immediate("negative"))));
 }
 
-
-static inline boolean equal(value a, value b) {
-    return true;
-}
-
+boolean equal(value a, value b);
 /*
 #define foreach(__i, __v) for (value _count = 0, _i ;\\
 			       _count< length(__v);\\
@@ -120,6 +120,7 @@ bitstring concatenate_internal(region r, ...);
 
 utf8 print(region r, bitstring s);
 bitstring constant(region r, u64 value, bits length);
+u64 bitstring_length(value v);
 
 typedef value map;
 #define is_negative(_x) false

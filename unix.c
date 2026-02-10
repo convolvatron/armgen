@@ -53,7 +53,7 @@ region mmap_region(region r) {
 value execute(region r, bitstring instructions, value input)
 {
     bitstring code = concatenate(r, instructions);
-    u64 clen = padlog(length(code), 3, 0);
+    u64 clen = padlog(bitstring_length(code), 3, 0);
     
     u32 *cs = (u32 *)(void *)(string_contents(code));
     //    for (u64 i = 0; i < (clen>>2); i++) 

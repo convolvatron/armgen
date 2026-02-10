@@ -32,7 +32,6 @@ static inline void *allocate(region r, u64 length) {
 #define NOT_A_VALUE ((void *)-1ull)
 
 #include <value.h>
-#include <apply.h>
 #include <stdarg.h>
 
 #define valargs(__start, __each) \
@@ -54,5 +53,6 @@ value execute(region r, bitstring instructions, value input);
 #include <alloca.h>
 u64 to_number(value x);
 value get_default(value in, value key, value otherwise);
-
+u64 vector_length(vector v);
 #include <instructions.h>
+#include <apply.h>

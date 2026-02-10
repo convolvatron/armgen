@@ -1,4 +1,5 @@
 #include <runtime.h>
+#include <string.h>
 
 // scan with a filter?
 value mapvv_get(value m, value key)
@@ -28,3 +29,17 @@ value map_internal(region r, ...)
     return new;
 }
 
+boolean mapvv_equal(value a, value b)
+{
+    value *ap = pointer_of(a);
+    u64 len = *(u64 *)ap;
+    if (len == *(u64 *)pointer_of(b)) {
+        for (int i; i < len; i++){
+            value name = *++ap;
+            value value = *++ap;
+            if (!equal(get(b, name), value)) return false;
+        }
+    }
+    
+    return true;
+}
