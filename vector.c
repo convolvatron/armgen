@@ -14,9 +14,14 @@ u64 vector_length(vector v) {
     return *(u64 *)v;
 }
 
-vector vector_get(value v, value k) {
+static value vector_get(value v, value k) {
     panic("vector get not implement");
 }
+
+static utf8 vector_print(value a) {
+    return utf8_immediate("vec!");
+}
+
 
 boolean vector_equal(value a, value b)
 {
@@ -33,3 +38,14 @@ boolean vector_equal(value a, value b)
     }
     return true;
 }
+
+struct representation vector_representation = {
+    "vector",
+    0,
+    vector_get,
+    vector_equal,
+    0,
+    0,
+};
+
+    

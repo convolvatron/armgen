@@ -8,6 +8,7 @@ utf8 print_immediate(region r, value a){
 }
 
 struct representation immediate_representation = {
+    "immediate",
     print_immediate,
     equal_immediate,
     0,

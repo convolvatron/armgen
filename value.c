@@ -3,6 +3,27 @@
 value one = ((void *)1);
 value zero = ((void *)0);
 
+extern struct representation immediate_representation,
+    bitstring_representation,
+    mapvv_representation,
+    utf8_representation,
+    oid_representation,
+    vector_representation;
+
+static representation representations[TAG_MAX] = {
+    &immediate_representation,
+    &bitstring_representation,
+    0, // region
+    &mapvv_representation,
+    0, // register
+    0, // status
+    0, // memory
+    &utf8_representation,
+    &oid_representation,
+    0, // function
+    &vector_representation,
+};
+    
 
 value get_default(value in, value key, value otherwise) {
     value v = get(in, key);
@@ -12,31 +33,34 @@ value get_default(value in, value key, value otherwise) {
     return v;
 }
 
-value mapvv_get(value m, value key);
-value vector_get(value m, value key);
-value number_get(value m, value key);
-
-value get(value in, value key) {
-    switch (tag_of(in)) {
-    case tag_mapvv:  return mapvv_get(in, key);
-    case tag_vector:  return vector_get(in, key);
-    case tag_bitstring:  return number_get(in, key);                        
-    }
-    panic("unknown get");
+value get(value v, value key) {
+    if (tag_of(v) > TAG_MAX) panic("invalid tag");
+    representation r = representations[tag_of(v)];
+    if (r == 0) panic("null representation");
+    if (r->get == 0) panic("no get handler");
+    return r->equal(v, key);
 }
 
-value mapvv_equal(value m, value key);
-value vector_equal(value m, value key);
-value number_equal(value m, value key);
+value print(region m, value v) {
+    if (tag_of(v) > TAG_MAX) panic("invalid tag");
+    representation r = representations[tag_of(v)];
+    if (r == 0) panic("null representation");
+    if (r->print == 0) panic("no print handler");
+    return r->print(m, v);
+}
+
+#include <stdio.h>
 
 boolean equal(value a, value b) {
     if (tag_of(a)  == tag_of(b)){
-        switch (tag_of(a)) {
-        case tag_mapvv:  return mapvv_equal(a, b);
-        case tag_vector:  return vector_equal(a, b);
-        case tag_bitstring:  return number_equal(a, b);                        
-        }
-        panic("unknown equals");
+        if (tag_of(a) > TAG_MAX) panic("invalid tag");
+        representation r = representations[tag_of(a)];
+        if (r == 0) panic("null representation");
+        if (r->equal == 0) panic("no equal handler");
+        return r->equal(a, b);
     }
-    panic("missing generalized equality implementation");
+    printf("missing equals case tags %d %d\n", tag_of(a), tag_of(b));
+    return false;
+    //    panic("missing generalized equality implementation");
 }
+

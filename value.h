@@ -65,11 +65,13 @@ extern value vector_internal(region, ...);
 // in bytes
 static inline u64 utf8_length(value v) {return *(u64 *)v;}
 
+#include <stdio.h>
 #define utf8_immediate(_x) ({\
     static u8 m[sizeof(_x) + 8];    \
     static int init =0;\
     if (!init) {							\
-	for(int i = 1 ;i < sizeof(_x); i++) m[i]=_x[i];			\
+	for(int i = 0 ;i < sizeof(_x); i++) m[i+8]=_x[i];			\
+        printf("uix %p %s\n",m, m + 8);                                \
 	*(u64 *)m = (sizeof(_x) - 1) * 8;				\
 	init = 1;\
      }						\
@@ -118,9 +120,21 @@ static inline s64 from_signed(value x) {
 #define new_map(_r, ...) map_internal(_r, __VA_ARGS__, NOT_A_VALUE)
 bitstring concatenate_internal(region r, ...);
 
-utf8 print(region r, bitstring s);
+utf8 print(region r, value v);
 bitstring constant(region r, u64 value, bits length);
 u64 bitstring_length(value v);
 
 typedef value map;
 #define is_negative(_x) false
+
+typedef struct representation {
+    char *name;
+    utf8 (*print)(region r, value v);
+    boolean (*equal)(value a, value b);
+    value (*get)(value v, value k);
+    bitstring (*serialize)(value v);
+    value (*deserialize)(region r, bitstring b);
+} *representation;
+    
+
+    

@@ -9,6 +9,7 @@ static utf8 print_oid(region r, value a){
 }
 
 struct representation oid_representation = {
+    "oid",
     print_oid,
     equal_oid,
     0,

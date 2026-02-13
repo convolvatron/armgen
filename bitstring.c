@@ -1,7 +1,11 @@
 #include <runtime.h>
 
+#define bitstring_contents(x) (((u64 *)x) + 1)
+
 u64 bitstring_length(value s) {
-    if (tag_of(s) == tag_bitstring) {
+    if (s == zero) return 0;
+    if (s == one) return 1;    
+    if ((tag_of(s) == tag_bitstring) || (tag_of(s) == tag_utf8)){
         u64 *x = pointer_of(s);
         return *x;
     }
@@ -72,25 +76,6 @@ bitstring constant(region r, u64 value, bits length) {
     return new;
 }
 
-
-/*bit string_get(string s, u64 index) {
-    if ((s == one) || (s == zero)) {
-      return ((s == one)  && (index == 0))?1:0;
-    }
-    return !!((string_contents(s))[index>>6]&(1ull<<(index&63)));
-}
-*/
-
-utf8 print(region r, bitstring s) {
-    u64 len = bitstring_length(s);
-    utf8 new = sallocate(r, len*8);
-    u8 *target = (u8 *)string_contents(new);
-    for (s64 i=len-1; i>=0; i--) {
-        *target++ = get(s, immediate(r, i))?'1':'0';
-    }
-    return new;
-}
-
 static char *hex_digits= "0123456789abcdef";
 
 utf8 print_hex(region r, bitstring s) {
@@ -137,13 +122,34 @@ bitstring coerce_number(region r, bitstring in, bits target) {
 
 }
 
-/*
-static boolean vstrcmp(char *x, utf8 a) {
-    int i = 0;
-    u8 *ab = (u8*)string_contents(a);
-    for (;x[i];i++);
-    if ((i * 8) != length(a)) return false;
-    for (int j = 0;j < i; j++) if (ab[j] != x[j]) return false;
-    return true;
+static value bitstring_get(value v, value k) {
+    u64 index = to_number(k);
+    if ((v == one) || (v == zero)) {
+        return ((v == one) && (index == 0))?one:zero;
+    }
+    // check length
+    return (bitstring_contents(v)[index>>6]&(1ull<<(index&63)))?one:zero;
 }
-*/
+
+static boolean bitstring_equal(value a, value b){
+    panic("no bitstring equal");
+}
+
+static utf8 bitstring_print(region r, value a) {
+    u64 len = bitstring_length(a);
+    utf8 new = sallocate(r, len*8);
+    u8 *target = (u8 *)string_contents(new);
+    for (s64 i=len-1; i>=0; i--) {
+        *target++ = get(a, immediate(r, i))?'1':'0';
+    }
+    return new;
+}
+
+struct representation bitstring_representation = {
+    "bitstring", 
+    bitstring_print,    
+    bitstring_equal,
+    bitstring_get,
+    0,
+    0,
+};
