@@ -1,7 +1,8 @@
 #include <runtime.h>
 
+// a bitstring is 64 bits of length followed by logpad(length,6) bits of body
 #define bitstring_contents(x) (((u64 *)x) + 1)
-
+void output_utf8_line(utf8 s);
 u64 bitstring_length(value s) {
     if (s == zero) return 0;
     if (s == one) return 1;    
@@ -12,23 +13,8 @@ u64 bitstring_length(value s) {
     panic("not a bitstring");
 }
 
-static void cat_one(bitstring source, u64 *offset, u64 *working, u64 **base) {
-    u64 *sbase = string_contents(source);
-    u64 total = bitstring_length(source);
-    
-    while (total) {
-        u64 xfer = min(total, 64-*offset);
-        u64 sword = *sbase++;
-        *working |= sword << (*offset);
-        if ((*offset += xfer) == 64) {
-            **base = *working;
-	    *base = *base+1;
-            *working = sword >> (64 - *offset);
-            *offset = 0;
-        }
-        total -= xfer;
-    }
-}
+// working is the leftover peices of the word we are copying. the last word in the output. why are
+// keeping it outside of base? because we dont want to assume its initialized
 
 bitstring substring(region r, bitstring source, u64 start_inc, u64 end_exc) {
     bitstring new = sallocate(r, end_exc - start_inc);
@@ -40,6 +26,52 @@ bitstring substring(region r, bitstring source, u64 start_inc, u64 end_exc) {
     }
     return new;
 }
+
+
+static char *hex_digits= "0123456789abcdef";
+
+utf8 print_hex(region r, bitstring s) {
+    u64 len = bitstring_length(s);
+    bitstring new = sallocate(r, len*2+(len/32)*8);
+    u8 *target = (u8 *)string_contents(new);
+    for (s64 i=len-4; i >=0 ; i-=4) {
+	bitstring n = substring(r, s, i, i+4);
+	// macro
+	int nib = *string_contents(n);
+        *target++ = hex_digits[nib];
+	if (!(i % 128)) {
+	    *target++ = '\n';
+	} else {
+	    if (!(i % 32)) *target++ = ' ';
+	}
+    }
+    return new;
+}
+
+#define max(a, b) ((a)>(b)?(a):(b))
+
+static inline void cat_one(bitstring source, u64 *offset, u64 *working, u64 **base) {
+    u64 *sbase = string_contents(source);
+    u64 total = bitstring_length(source);
+    
+    while (total) {
+        u64 xfer = min(total, 64-*offset);
+        u64 sword = *sbase++;
+        u64 mask =  (xfer==64)?-1ull:((1ull<<xfer)-1);
+        *working |= ((sword&mask) << (*offset));
+        total -= xfer;
+        u64 rlen = min(*offset, total);
+        
+        if ((*offset += xfer) == 64) {
+            **base = *working;
+	    *base = *base+1;
+            *offset = rlen;
+            *working = (sword >> (64-rlen)) & ((1<<rlen)-1);
+        }
+    }
+}
+
+int write(int, void *, int);
 
 bitstring concatenate_internal(region r, ...) {
     u64 total = 0;
@@ -61,7 +93,7 @@ bitstring concatenate_internal(region r, ...) {
 
     // vector foreach
     for (int i = count-1; i >=0; i--){
-	cat_one(temp[i], &offset, &working, &base);
+        cat_one(temp[i], &offset, &working, &base);
     }
 
     if (offset >0) {
@@ -73,26 +105,6 @@ bitstring concatenate_internal(region r, ...) {
 bitstring constant(region r, u64 value, bits length) {
     bitstring new = sallocate(r, length);
     *string_contents(new) = value;
-    return new;
-}
-
-static char *hex_digits= "0123456789abcdef";
-
-utf8 print_hex(region r, bitstring s) {
-    u64 len = bitstring_length(s);
-    bitstring new = sallocate(r, len*2+(len/32)*8);
-    u8 *target = (u8 *)string_contents(new);
-    for (s64 i=len-4; i >=0 ; i-=4) {
-	bitstring n = substring(r, s, i, i+4);
-	// macro
-	int nib = *string_contents(n);
-        *target++ = hex_digits[nib];
-	if (!(i % 128)) {
-	    *target++ = '\n';
-	} else {
-	    if (!(i % 32)) *target++ = ' ';
-	}
-    }
     return new;
 }
 

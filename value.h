@@ -34,7 +34,7 @@ static inline bitstring sallocate(region r, bits length) {
     return x;
 }
 
-
+//nope!
 #define string_contents(_x) ((tag_of(_x) == tag_immediate)?(u64 *)&_x:((u64 *)pointer_of(_x))+1)
 
 u64 number_length (value s);
@@ -70,8 +70,7 @@ static inline u64 utf8_length(value v) {return *(u64 *)v;}
     static u8 m[sizeof(_x) + 8];    \
     static int init =0;\
     if (!init) {							\
-	for(int i = 0 ;i < sizeof(_x); i++) m[i+8]=_x[i];			\
-        printf("uix %p %s\n",m, m + 8);                                \
+	for(int i = 0 ;i < sizeof(_x); i++) m[i+8]=_x[i];		\
 	*(u64 *)m = (sizeof(_x) - 1) * 8;				\
 	init = 1;\
      }						\

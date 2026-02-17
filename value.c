@@ -38,7 +38,7 @@ value get(value v, value key) {
     representation r = representations[tag_of(v)];
     if (r == 0) panic("null representation");
     if (r->get == 0) panic("no get handler");
-    return r->equal(v, key);
+    return r->get(v, key);
 }
 
 value print(region m, value v) {

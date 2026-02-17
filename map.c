@@ -43,6 +43,8 @@ static boolean mapvv_equal(value a, value b)
     return true;
 }
 
+void output_utf8_line(utf8 s);
+
 // this leaks something like n^2 memory!
 utf8 print_map(region r, value m) {
     bitstring result = 0;
@@ -52,8 +54,9 @@ utf8 print_map(region r, value m) {
     value comma = utf8_immediate(",");
     value colon = utf8_immediate(":");    
     
-    for (u64 i = 0; i < count; i++, body++) 
-        result = concatenate(r, result, i>0?((i&1)?comma: colon):zero, print(r, *body));
+    for (u64 i = 0; i < count; i++, body++){
+        result = concatenate(r, result, i>0?((i&1)?colon: comma):zero, print(r, *body));
+    }
     
     return result;
 }
